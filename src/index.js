@@ -150,6 +150,7 @@ async function validateSchema(document, schemaUrl) {
     throw new Error(`Failed to fetch schema: ${response.status} ${response.statusText}`);
   }
   const schema = await response.json();
+  sanitizeSchemaIds(schema, true);
 
   await ensureModule("ajv", "8.12.0");
   const AjvDraft04 = await ensureModule("ajv-draft-04", "1.0.0");
@@ -162,6 +163,23 @@ async function validateSchema(document, schemaUrl) {
   if (!valid) {
     const details = ajv.errorsText(validate.errors, { separator: "\n" });
     throw new Error(`Schema validation failed:\n${details}`);
+  }
+}
+
+function sanitizeSchemaIds(node, isRoot) {
+  if (!node || typeof node !== "object") return;
+
+  if (!isRoot && typeof node.id === "string" && !node.id.startsWith("http")) {
+    delete node.id;
+  }
+
+  if (Array.isArray(node)) {
+    node.forEach((item) => sanitizeSchemaIds(item, false));
+    return;
+  }
+
+  for (const value of Object.values(node)) {
+    sanitizeSchemaIds(value, false);
   }
 }
 
