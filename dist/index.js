@@ -231,6 +231,7 @@ async function validateSchema(document, schemaUrl) {
   }
   const schema = await response.json();
   sanitizeSchemaIds(schema, true);
+  sanitizeSchemaRequired(schema);
 
   await ensureModule("ajv", "8.12.0");
   const AjvDraft04 = await ensureModule("ajv-draft-04", "1.0.0");
@@ -260,6 +261,23 @@ function sanitizeSchemaIds(node, isRoot) {
 
   for (const value of Object.values(node)) {
     sanitizeSchemaIds(value, false);
+  }
+}
+
+function sanitizeSchemaRequired(node) {
+  if (!node || typeof node !== "object") return;
+
+  if (Object.prototype.hasOwnProperty.call(node, "required") && !Array.isArray(node.required)) {
+    delete node.required;
+  }
+
+  if (Array.isArray(node)) {
+    node.forEach((item) => sanitizeSchemaRequired(item));
+    return;
+  }
+
+  for (const value of Object.values(node)) {
+    sanitizeSchemaRequired(value);
   }
 }
 
