@@ -201,8 +201,8 @@ function sanitizeSchemaRequired(node) {
   }
 }
 
-async function uploadDocument(document, token) {
-  const response = await fetch("https://client.apimetrics.io/api/2/import", {
+async function uploadDocument(document, token, endpoint) {
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -228,6 +228,7 @@ async function run() {
   const schemaUrl = getInput("schema_url") || "https://client.apimetrics.io/api/2/import/schema.json";
   const yttVersion = getInput("ytt_version") || "v0.48.0";
   const yttArgs = getInput("ytt_args");
+  const endpoint = getInput("endpoint") || "https://client.apimetrics.io/api/2/import";
 
   if (!templateInput && !fileInput) {
     throw new Error("Provide either 'file' or 'template'.");
@@ -249,7 +250,7 @@ async function run() {
     await validateSchema(data, schemaUrl);
   }
 
-  const resultText = await uploadDocument(data, token);
+  const resultText = await uploadDocument(data, token, endpoint);
   if (resultText && resultText.trim() !== "") {
     console.log(resultText.trim());
   } else {

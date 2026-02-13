@@ -22,6 +22,10 @@ inputs:
     description: "Override schema URL"
     required: false
     default: "https://client.apimetrics.io/api/2/import/schema.json"
+  endpoint:
+    description: "Override API endpoint for import"
+    required: false
+    default: "https://client.apimetrics.io/api/2/import"
   ytt_version:
     description: "ytt version to download (e.g., v0.48.0)"
     required: false
