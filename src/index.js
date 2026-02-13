@@ -219,6 +219,12 @@ async function uploadDocument(document, token, endpoint) {
   return response.text();
 }
 
+function summarizeDocument(document) {
+  if (!document || typeof document !== "object") return "<non-object>";
+  const topKeys = Object.keys(document).slice(0, 12);
+  return `keys=${topKeys.join(",")}`;
+}
+
 async function run() {
   const fileInput = getInput("file");
   const templateInput = getInput("template");
@@ -229,6 +235,7 @@ async function run() {
   const yttVersion = getInput("ytt_version") || "v0.48.0";
   const yttArgs = getInput("ytt_args");
   const endpoint = getInput("endpoint") || "https://client.apimetrics.io/api/2/import";
+  const debug = parseBoolean(getInput("debug"), false);
 
   if (!templateInput && !fileInput) {
     throw new Error("Provide either 'file' or 'template'.");
@@ -245,6 +252,11 @@ async function run() {
   }
 
   const { data } = await loadDocument(rawContent, sourceHint);
+
+  if (debug) {
+    console.log(`APIm import endpoint: ${endpoint}`);
+    console.log(`APIm import document summary: ${summarizeDocument(data)}`);
+  }
 
   if (validate) {
     await validateSchema(data, schemaUrl);

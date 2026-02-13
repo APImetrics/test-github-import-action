@@ -13,6 +13,7 @@ Uploads an APImetrics import document to the APImetrics API. The action can rend
 - `endpoint`: Override API endpoint (default: `https://client.apimetrics.io/api/2/import`).
 - `ytt_version`: ytt version to download (default: `v0.48.0`).
 - `ytt_args`: Extra args to pass to ytt.
+- `debug`: `true` or `false` (default: `false`) to log endpoint + request summary.
 
 ## Usage
 
