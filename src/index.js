@@ -137,9 +137,9 @@ async function validateSchema(document, schemaUrl) {
   }
   const schema = await response.json();
 
-  const Ajv = await ensureModule("ajv", "8.12.0");
+  const AjvDraft04 = await ensureModule("ajv-draft-04", "1.0.0");
   const addFormats = await ensureModule("ajv-formats", "2.1.1");
-  const ajv = new Ajv({ allErrors: true, strict: false });
+  const ajv = new AjvDraft04({ allErrors: true, strict: false });
   addFormats(ajv);
 
   const validate = ajv.compile(schema);
