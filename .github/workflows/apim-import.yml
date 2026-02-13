@@ -1,0 +1,17 @@
+name: APIm Import
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apim_import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload APImetrics definition
+        uses: ./
+        with:
+          file: path/to/import.yaml
+          token: ${{ secrets.APIM_TOKEN }}

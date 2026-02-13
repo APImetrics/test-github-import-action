@@ -1,0 +1,39 @@
+name: Check dist bundle
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches:
+      - "main"
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  check_dist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build dist
+        run: npm run build
+
+      - name: Fail if dist changed
+        run: |
+          git status --porcelain
+          git diff --exit-code -- dist/index.js

@@ -1,0 +1,14 @@
+{
+  "name": "apim-import-action",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub Action to upload APImetrics import documents",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.js -o dist"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "0.38.1"
+  }
+}

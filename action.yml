@@ -1,0 +1,38 @@
+name: "APIm Import"
+description: "Upload an APImetrics import YAML/JSON to the APImetrics API"
+author: "APIm"
+inputs:
+  file:
+    description: "Path to a YAML or JSON file in the repo"
+    required: false
+  template:
+    description: "Path to a ytt template file or directory"
+    required: false
+  template_values:
+    description: "Path to a ytt values file (optional)"
+    required: false
+  token:
+    description: "Bearer token for APImetrics API"
+    required: true
+  validate_schema:
+    description: "Validate against the APImetrics JSON Schema before upload"
+    required: false
+    default: "true"
+  schema_url:
+    description: "Override schema URL"
+    required: false
+    default: "https://client.apimetrics.io/api/2/import/schema.json"
+  ytt_version:
+    description: "ytt version to download (e.g., v0.48.0)"
+    required: false
+    default: "v0.48.0"
+  ytt_args:
+    description: "Extra args to pass to ytt"
+    required: false
+    default: ""
+runs:
+  using: "node20"
+  main: "dist/index.js"
+branding:
+  icon: "upload"
+  color: "blue"
