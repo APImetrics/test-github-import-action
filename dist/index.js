@@ -314,7 +314,7 @@ async function run() {
   const schemaUrl = getInput("schema_url") || "https://client.apimetrics.io/api/2/import/schema.json";
   const yttVersion = getInput("ytt_version") || "v0.48.0";
   const yttArgs = getInput("ytt_args");
-  const endpoint = getInput("endpoint") || "https://client.apimetrics.io/api/2/import";
+  const endpoint = getInput("endpoint") || "https://client.apimetrics.io/api/2/import/";
   const debug = parseBoolean(getInput("debug"), false);
 
   if (!templateInput && !fileInput) {
