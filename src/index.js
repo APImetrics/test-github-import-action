@@ -32,18 +32,32 @@ function fileExists(filePath) {
   }
 }
 
+const moduleCache = new Map();
+let moduleBaseDir = "";
+
 async function ensureModule(moduleName, version) {
+  if (moduleCache.has(moduleName)) {
+    return moduleCache.get(moduleName);
+  }
+
   try {
-    return require(moduleName);
+    const mod = require(moduleName);
+    moduleCache.set(moduleName, mod);
+    return mod;
   } catch {
-    const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "apim-action-"));
+    if (!moduleBaseDir) {
+      moduleBaseDir = await fsp.mkdtemp(path.join(os.tmpdir(), "apim-action-"));
+    }
+
     const pkg = version ? `${moduleName}@${version}` : moduleName;
     await execFileAsync("npm", ["install", "--silent", "--no-fund", "--no-audit", pkg], {
-      cwd: tempDir,
+      cwd: moduleBaseDir,
       env: process.env,
     });
-    const modulePath = path.join(tempDir, "node_modules", moduleName);
-    return require(modulePath);
+    const modulePath = path.join(moduleBaseDir, "node_modules", moduleName);
+    const mod = require(modulePath);
+    moduleCache.set(moduleName, mod);
+    return mod;
   }
 }
 
