@@ -1,5 +1,5 @@
-name: "APIm Import"
-description: "Upload an APImetrics import YAML/JSON to the APImetrics API"
+name: "APIm Import (test repo)"
+description: "Test repo action: upload an APImetrics import YAML/JSON to the APImetrics API"
 author: "APIm"
 inputs:
   file:

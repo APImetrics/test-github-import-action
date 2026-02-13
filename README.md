@@ -19,7 +19,7 @@ Uploads an APImetrics import document to the APImetrics API. The action can rend
 
 ```yaml
 - name: Upload APImetrics definition
-  uses: apimetrics/apim-import-action@v1
+  uses: APImetrics/test-github-import-action@v1
   with:
     file: path/to/import.yaml
     token: ${{ secrets.APIM_TOKEN }}
@@ -29,7 +29,7 @@ Uploads an APImetrics import document to the APImetrics API. The action can rend
 
 ```yaml
 - name: Render + upload APImetrics definition
-  uses: apimetrics/apim-import-action@v1
+  uses: APImetrics/test-github-import-action@v1
   with:
     template: templates/import
     template_values: templates/values.yml
@@ -40,7 +40,7 @@ Uploads an APImetrics import document to the APImetrics API. The action can rend
 
 ```yaml
 - name: Upload without schema validation
-  uses: apimetrics/apim-import-action@v1
+  uses: APImetrics/test-github-import-action@v1
   with:
     file: path/to/import.yaml
     validate_schema: false
