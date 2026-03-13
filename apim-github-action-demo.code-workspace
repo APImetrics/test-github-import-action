@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../apim-github-action-demo-demo"
 		}
 	],
 	"settings": {}

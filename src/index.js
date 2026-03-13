@@ -7,6 +7,7 @@ const os = require("os");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
 const { buildProjectFromOpenApi } = require("./openapi");
+const { parseBoolean, summarizeDocument } = require("./utils");
 
 const execFileAsync = promisify(execFile);
 
@@ -17,11 +18,6 @@ function getInput(name, options = {}) {
     throw new Error(`Missing required input: ${name}`);
   }
   return value || "";
-}
-
-function parseBoolean(value, defaultValue) {
-  if (value === "") return defaultValue;
-  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
 }
 
 function fileExists(filePath) {
@@ -224,12 +220,6 @@ async function uploadDocument(document, token, endpoint) {
   }
 
   return response.text();
-}
-
-function summarizeDocument(document) {
-  if (!document || typeof document !== "object") return "<non-object>";
-  const topKeys = Object.keys(document).slice(0, 12);
-  return `keys=${topKeys.join(",")}`;
 }
 
 async function run() {

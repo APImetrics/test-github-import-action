@@ -687,8 +687,32 @@ function resolvePointer(root, pointer) {
 
 module.exports = {
   buildProjectFromOpenApi,
+  normalizeKeyStr,
+  selectOperations,
+  pickBaseServer,
+  mergeProject,
 };
 
+
+/***/ }),
+
+/***/ 880:
+/***/ ((module) => {
+
+
+
+function parseBoolean(value, defaultValue) {
+  if (value === "") return defaultValue;
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+}
+
+function summarizeDocument(document) {
+  if (!document || typeof document !== "object") return "<non-object>";
+  const topKeys = Object.keys(document).slice(0, 12);
+  return `keys=${topKeys.join(",")}`;
+}
+
+module.exports = { parseBoolean, summarizeDocument };
 
 /***/ })
 
@@ -742,6 +766,7 @@ const os = __nccwpck_require__(37);
 const { execFile } = __nccwpck_require__(81);
 const { promisify } = __nccwpck_require__(837);
 const { buildProjectFromOpenApi } = __nccwpck_require__(465);
+const { parseBoolean, summarizeDocument } = __nccwpck_require__(880);
 
 const execFileAsync = promisify(execFile);
 
@@ -752,11 +777,6 @@ function getInput(name, options = {}) {
     throw new Error(`Missing required input: ${name}`);
   }
   return value || "";
-}
-
-function parseBoolean(value, defaultValue) {
-  if (value === "") return defaultValue;
-  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
 }
 
 function fileExists(filePath) {
@@ -959,12 +979,6 @@ async function uploadDocument(document, token, endpoint) {
   }
 
   return response.text();
-}
-
-function summarizeDocument(document) {
-  if (!document || typeof document !== "object") return "<non-object>";
-  const topKeys = Object.keys(document).slice(0, 12);
-  return `keys=${topKeys.join(",")}`;
 }
 
 async function run() {
