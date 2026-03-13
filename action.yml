@@ -5,6 +5,15 @@ inputs:
   file:
     description: "Path to a YAML or JSON file in the repo"
     required: false
+  openapi_file:
+    description: "Path to an OpenAPI specification file (YAML or JSON)"
+    required: false
+  openapi_mapping_file:
+    description: "Path to OpenAPI mapping config that controls generation"
+    required: false
+  base_project_file:
+    description: "Optional APIm import file to merge generated OpenAPI calls into"
+    required: false
   template:
     description: "Path to a ytt template file or directory"
     required: false
@@ -12,8 +21,8 @@ inputs:
     description: "Path to a ytt values file (optional)"
     required: false
   token:
-    description: "Bearer token for APImetrics API"
-    required: true
+    description: "Bearer token for APImetrics API (required unless dry_run=true)"
+    required: false
   validate_schema:
     description: "Validate against the APImetrics JSON Schema before upload"
     required: false
@@ -34,6 +43,21 @@ inputs:
     description: "Extra args to pass to ytt"
     required: false
     default: ""
+  generated_tag:
+    description: "Tag used to mark generated calls/workflows for merge cleanup"
+    required: false
+    default: "openapi-sync"
+  cleanup_generated:
+    description: "Remove stale generated entities that are no longer in OpenAPI selection"
+    required: false
+    default: "true"
+  dry_run:
+    description: "Generate and validate the document but skip upload"
+    required: false
+    default: "false"
+  output_file:
+    description: "Optional path to write the generated APIm import JSON"
+    required: false
   debug:
     description: "Log resolved endpoint and request summary (no secrets)"
     required: false

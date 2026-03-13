@@ -1,0 +1,60 @@
+openapi: 3.0.3
+info:
+  title: Pets API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      summary: List pets
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 25
+      responses:
+        "200":
+          description: OK
+    post:
+      operationId: createPet
+      summary: Create pet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: "{{ petName }}"
+              type: dog
+      responses:
+        "201":
+          description: Created
+  /pets/{petId}:
+    parameters:
+      - name: petId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getPet
+      summary: Get pet
+      parameters:
+        - name: includeHistory
+          in: query
+          required: false
+          schema:
+            type: boolean
+          example: false
+      responses:
+        "200":
+          description: OK
+    delete:
+      operationId: deletePet
+      summary: Delete pet
+      responses:
+        "204":
+          description: Deleted

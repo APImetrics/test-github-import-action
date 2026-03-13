@@ -15,3 +15,37 @@ jobs:
         with:
           file: path/to/import.yaml
           token: ${{ secrets.APIM_TOKEN }}
+
+  apim_openapi_sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync APImetrics definition from OpenAPI
+        uses: ./
+        with:
+          openapi_file: api/openapi.yaml
+          openapi_mapping_file: api/apim-mapping.yaml
+          base_project_file: apim/project-base.yaml
+          token: ${{ secrets.APIM_TOKEN }}
+
+  apim_openapi_dry_run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dry-run OpenAPI sync and save generated payload
+        uses: ./
+        with:
+          openapi_file: api/openapi.yaml
+          openapi_mapping_file: api/apim-mapping.yaml
+          base_project_file: apim/project-base.yaml
+          dry_run: true
+          output_file: artifacts/apim-import.json
+
+      - name: Show generated payload summary
+        run: |
+          wc -c artifacts/apim-import.json
+          head -n 40 artifacts/apim-import.json

@@ -6,6 +6,7 @@ const path = require("path");
 const os = require("os");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
+const { buildProjectFromOpenApi } = require("./openapi");
 
 const execFileAsync = promisify(execFile);
 
@@ -144,6 +145,12 @@ async function loadDocument(raw, fileHint) {
   return { data: yaml.load(raw), format: "yaml" };
 }
 
+async function loadDocumentFromFile(filePath) {
+  const raw = await fsp.readFile(filePath, "utf8");
+  const { data } = await loadDocument(raw, filePath);
+  return data;
+}
+
 async function validateSchema(document, schemaUrl) {
   const response = await fetch(schemaUrl);
   if (!response.ok) {
@@ -229,7 +236,14 @@ async function run() {
   const fileInput = getInput("file");
   const templateInput = getInput("template");
   const valuesInput = getInput("template_values");
-  const token = getInput("token", { required: true });
+  const openapiFile = getInput("openapi_file");
+  const openapiMappingFile = getInput("openapi_mapping_file");
+  const baseProjectFile = getInput("base_project_file");
+  const generatedTag = getInput("generated_tag") || "openapi-sync";
+  const cleanupGenerated = parseBoolean(getInput("cleanup_generated"), true);
+  const dryRun = parseBoolean(getInput("dry_run"), false);
+  const outputFile = getInput("output_file");
+  const token = dryRun ? getInput("token") : getInput("token", { required: true });
   const validate = parseBoolean(getInput("validate_schema"), true);
   const schemaUrl = getInput("schema_url") || "https://client.apimetrics.io/api/2/import/schema.json";
   const yttVersion = getInput("ytt_version") || "v0.48.0";
@@ -237,21 +251,51 @@ async function run() {
   const endpoint = getInput("endpoint") || "https://client.apimetrics.io/api/2/import/";
   const debug = parseBoolean(getInput("debug"), false);
 
-  if (!templateInput && !fileInput) {
-    throw new Error("Provide either 'file' or 'template'.");
+  const openApiMode = openapiFile.trim() !== "";
+
+  if (!openApiMode && !templateInput && !fileInput) {
+    throw new Error("Provide one mode: 'openapi_file' or 'file' or 'template'.");
   }
 
-  let rawContent = "";
-  let sourceHint = fileInput;
+  if (openApiMode && (fileInput || templateInput)) {
+    throw new Error("'openapi_file' cannot be combined with 'file' or 'template'.");
+  }
 
-  if (templateInput) {
-    rawContent = await renderWithYtt(templateInput, valuesInput, yttArgs, yttVersion);
-    sourceHint = templateInput;
+  if (!openApiMode && (openapiMappingFile || baseProjectFile)) {
+    throw new Error("'openapi_mapping_file' and 'base_project_file' require 'openapi_file'.");
+  }
+
+  let data;
+
+  if (openApiMode) {
+    const openApiDoc = await loadDocumentFromFile(openapiFile);
+    const mappingDoc = openapiMappingFile ? await loadDocumentFromFile(openapiMappingFile) : {};
+    const baseDoc = baseProjectFile ? await loadDocumentFromFile(baseProjectFile) : null;
+    const transformed = buildProjectFromOpenApi(openApiDoc, mappingDoc, {
+      baseProjectDocument: baseDoc,
+      generatedTag,
+      cleanupGenerated,
+    });
+    data = transformed.document;
+
+    if (debug) {
+      console.log(`OpenAPI sync selected operations: ${transformed.summary.selectedOperations}`);
+      console.log(`OpenAPI sync generated calls: ${transformed.summary.generatedCalls}`);
+      console.log(`OpenAPI sync workflow id: ${transformed.summary.workflowId}`);
+    }
   } else {
-    rawContent = await fsp.readFile(fileInput, "utf8");
-  }
+    let rawContent = "";
+    let sourceHint = fileInput;
 
-  const { data } = await loadDocument(rawContent, sourceHint);
+    if (templateInput) {
+      rawContent = await renderWithYtt(templateInput, valuesInput, yttArgs, yttVersion);
+      sourceHint = templateInput;
+    } else {
+      rawContent = await fsp.readFile(fileInput, "utf8");
+    }
+
+    ({ data } = await loadDocument(rawContent, sourceHint));
+  }
 
   if (debug) {
     console.log(`APIm import endpoint: ${endpoint}`);
@@ -260,6 +304,18 @@ async function run() {
 
   if (validate) {
     await validateSchema(data, schemaUrl);
+  }
+
+  if (outputFile) {
+    const outputDir = path.dirname(outputFile);
+    await fsp.mkdir(outputDir, { recursive: true });
+    await fsp.writeFile(outputFile, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+    console.log(`Wrote generated import document to: ${outputFile}`);
+  }
+
+  if (dryRun) {
+    console.log("Dry run complete. Skipping upload.");
+    return;
   }
 
   const resultText = await uploadDocument(data, token, endpoint);

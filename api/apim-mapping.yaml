@@ -1,0 +1,30 @@
+server_url: https://api.example.com/v1
+
+default_tags:
+  - generated
+
+defaults:
+  headers:
+    x-api-key: "{{ apiKey }}"
+  query:
+    region: eu-west-1
+
+include:
+  - "GET /pets"
+  - operationId: createPet
+  - operationId: getPet
+
+exclude:
+  - operationId: deletePet
+
+operations:
+  - operationId: getPet
+    request:
+      parameters:
+        includeHistory: true
+
+workflow:
+  id: pets-openapi-sync
+  name: Pets OpenAPI Workflow
+  tags:
+    - sync

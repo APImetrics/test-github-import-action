@@ -1,0 +1,34 @@
+version: "2"
+project:
+  meta:
+    name: Pets Monitoring
+  calls:
+    - id: custom-health-check
+      meta:
+        name: Healthcheck
+        description: Existing call preserved across merges
+        tags:
+          - custom
+      request:
+        method: GET
+        url:
+          scheme: https
+          hostname: status.example.com
+          port: null
+          path: /health
+        headers:
+          x-api-key: "{{ monitoringKey }}"
+        parameters:
+          region: eu-west-1
+        body: null
+  workflows:
+    - id: custom-workflow
+      meta:
+        name: Existing Workflow
+        description: Preserved user-authored workflow
+        tags:
+          - custom
+      workflow:
+        stop_on_failure: true
+        call_ids:
+          - custom-health-check
