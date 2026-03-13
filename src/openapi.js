@@ -17,6 +17,26 @@ function buildProjectFromOpenApi(openapiDoc, mappingDoc, options = {}) {
     throw new Error("OpenAPI mapping document must be an object.");
   }
 
+  if (mappingDoc && mappingDoc.include !== undefined && !Array.isArray(mappingDoc.include)) {
+    throw new Error("OpenAPI mapping include must be an array when provided.");
+  }
+
+  if (mappingDoc && mappingDoc.exclude !== undefined && !Array.isArray(mappingDoc.exclude)) {
+    throw new Error("OpenAPI mapping exclude must be an array when provided.");
+  }
+
+  if (mappingDoc && mappingDoc.operations !== undefined && !Array.isArray(mappingDoc.operations)) {
+    throw new Error("OpenAPI mapping operations must be an array when provided.");
+  }
+
+  if (
+    mappingDoc &&
+    mappingDoc.defaults !== undefined &&
+    (!mappingDoc.defaults || typeof mappingDoc.defaults !== "object" || Array.isArray(mappingDoc.defaults))
+  ) {
+    throw new Error("OpenAPI mapping defaults must be an object when provided.");
+  }
+
   const generatedTag = options.generatedTag || "openapi-sync";
   const cleanupGenerated = options.cleanupGenerated !== false;
   const baseProjectDocument = normalizeBaseProject(options.baseProjectDocument);

@@ -107,6 +107,27 @@ describe("buildProjectFromOpenApi - validation", () => {
     );
   });
 
+  test("throws when mapping include is not an array", () => {
+    assert.throws(
+      () => buildProjectFromOpenApi({ openapi: "3.0.3", paths: {} }, { include: "GET /pets" }),
+      /mapping include must be an array when provided/
+    );
+  });
+
+  test("throws when mapping operations is not an array", () => {
+    assert.throws(
+      () => buildProjectFromOpenApi({ openapi: "3.0.3", paths: {} }, { operations: {} }),
+      /mapping operations must be an array when provided/
+    );
+  });
+
+  test("throws when mapping defaults is not an object", () => {
+    assert.throws(
+      () => buildProjectFromOpenApi({ openapi: "3.0.3", paths: {} }, { defaults: [] }),
+      /mapping defaults must be an object when provided/
+    );
+  });
+
   test("accepts swagger 2.0 document", () => {
     const result = buildProjectFromOpenApi({ swagger: "2.0", host: "api.example.com", paths: {} }, {});
     assert.equal(result.summary.selectedOperations, 0);
