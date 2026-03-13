@@ -7,6 +7,7 @@ const os = require("os");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
 const { buildProjectFromOpenApi } = require("./openapi");
+const openApiMappingSchema = require("./openapi-mapping.schema.json");
 const { parseBoolean, summarizeDocument } = require("./utils");
 
 const execFileAsync = promisify(execFile);
@@ -31,6 +32,7 @@ function fileExists(filePath) {
 
 const moduleCache = new Map();
 let moduleBaseDir = "";
+let validateOpenApiMappingDocumentFn = null;
 
 async function ensureModule(moduleName, version) {
   if (moduleCache.has(moduleName)) {
@@ -170,6 +172,27 @@ async function validateSchema(document, schemaUrl) {
   }
 }
 
+async function validateOpenApiMapping(document) {
+  const Ajv = await ensureModule("ajv", "8.12.0");
+  const addFormats = await ensureModule("ajv-formats", "2.1.1");
+
+  if (!validateOpenApiMappingDocumentFn) {
+    const ajv = new Ajv({ allErrors: true, strict: false });
+    addFormats(ajv);
+    validateOpenApiMappingDocumentFn = ajv.compile(openApiMappingSchema);
+  }
+
+  const valid = validateOpenApiMappingDocumentFn(document);
+  if (!valid) {
+    const details = (validateOpenApiMappingDocumentFn.errors || [])
+      .map((error) => `${error.instancePath || "/"} ${error.message}`.trim())
+      .slice(0, 25)
+      .join("\n");
+
+    throw new Error(`OpenAPI mapping validation failed:\n${details}`);
+  }
+}
+
 function sanitizeSchemaIds(node, isRoot) {
   if (!node || typeof node !== "object") return;
 
@@ -260,6 +283,7 @@ async function run() {
   if (openApiMode) {
     const openApiDoc = await loadDocumentFromFile(openapiFile);
     const mappingDoc = openapiMappingFile ? await loadDocumentFromFile(openapiMappingFile) : {};
+    await validateOpenApiMapping(mappingDoc);
     const baseDoc = baseProjectFile ? await loadDocumentFromFile(baseProjectFile) : null;
     const transformed = buildProjectFromOpenApi(openApiDoc, mappingDoc, {
       baseProjectDocument: baseDoc,

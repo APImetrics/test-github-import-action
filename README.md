@@ -35,6 +35,7 @@ Mode rules:
 
 - `openapi_file` is exclusive with `file` and `template`.
 - `openapi_mapping_file` and `base_project_file` require `openapi_file`.
+- `openapi_mapping_file` is validated against [src/openapi-mapping.schema.json](src/openapi-mapping.schema.json).
 
 ## Usage
 
@@ -85,6 +86,8 @@ Mode rules:
 ### OpenAPI mapping file example
 
 ```yaml
+# yaml-language-server: $schema=../src/openapi-mapping.schema.json
+
 server_url: https://api.example.com/v1
 
 include:
@@ -110,6 +113,11 @@ workflow:
   id: openapi-sync-workflow
   name: OpenAPI Sync Workflow
 ```
+
+### Mapping validation
+
+- The action validates `openapi_mapping_file` before OpenAPI transformation.
+- Validation uses [src/openapi-mapping.schema.json](src/openapi-mapping.schema.json) and fails fast with JSON pointer paths in error output.
 
 ### Dry-run OpenAPI sync and save generated payload
 

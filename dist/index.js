@@ -66,6 +66,26 @@ function buildProjectFromOpenApi(openapiDoc, mappingDoc, options = {}) {
     throw new Error("OpenAPI mapping document must be an object.");
   }
 
+  if (mappingDoc && mappingDoc.include !== undefined && !Array.isArray(mappingDoc.include)) {
+    throw new Error("OpenAPI mapping include must be an array when provided.");
+  }
+
+  if (mappingDoc && mappingDoc.exclude !== undefined && !Array.isArray(mappingDoc.exclude)) {
+    throw new Error("OpenAPI mapping exclude must be an array when provided.");
+  }
+
+  if (mappingDoc && mappingDoc.operations !== undefined && !Array.isArray(mappingDoc.operations)) {
+    throw new Error("OpenAPI mapping operations must be an array when provided.");
+  }
+
+  if (
+    mappingDoc &&
+    mappingDoc.defaults !== undefined &&
+    (!mappingDoc.defaults || typeof mappingDoc.defaults !== "object" || Array.isArray(mappingDoc.defaults))
+  ) {
+    throw new Error("OpenAPI mapping defaults must be an object when provided.");
+  }
+
   const generatedTag = options.generatedTag || "openapi-sync";
   const cleanupGenerated = options.cleanupGenerated !== false;
   const baseProjectDocument = normalizeBaseProject(options.baseProjectDocument);
@@ -714,6 +734,13 @@ function summarizeDocument(document) {
 
 module.exports = { parseBoolean, summarizeDocument };
 
+/***/ }),
+
+/***/ 669:
+/***/ ((module) => {
+
+module.exports = JSON.parse('{"$schema":"http://json-schema.org/draft-07/schema#","$id":"https://apimetrics.io/schemas/openapi-mapping.schema.json","title":"APIm OpenAPI Mapping","type":"object","additionalProperties":false,"properties":{"server_url":{"type":"string","minLength":1},"default_tags":{"type":"array","items":{"type":"string"}},"include":{"type":"array","items":{"$ref":"#/definitions/selector"}},"exclude":{"type":"array","items":{"$ref":"#/definitions/selector"}},"defaults":{"type":"object","additionalProperties":false,"properties":{"headers":{"type":"object","additionalProperties":{}},"query":{"type":"object","additionalProperties":{}},"path":{"type":"object","additionalProperties":{}},"body":{}}},"operations":{"type":"array","items":{"$ref":"#/definitions/operationOverride"}},"workflow":{"type":"object","additionalProperties":false,"properties":{"id":{"type":"string"},"name":{"type":"string"},"description":{"type":"string"},"tags":{"type":"array","items":{"type":"string"}},"stop_on_failure":{"type":"boolean"}}}},"definitions":{"selector":{"oneOf":[{"type":"string","minLength":1},{"type":"object","additionalProperties":false,"properties":{"operationId":{"type":"string","minLength":1},"method":{"type":"string","minLength":1},"path":{"type":"string","minLength":1}},"anyOf":[{"required":["operationId"]},{"required":["method"]},{"required":["path"]}]}]},"operationOverride":{"type":"object","additionalProperties":false,"properties":{"operationId":{"type":"string","minLength":1},"method":{"type":"string","minLength":1},"path":{"type":"string","minLength":1},"include":{"type":"boolean"},"id":{"type":"string","minLength":1},"call_id":{"type":"string","minLength":1},"name":{"type":"string"},"description":{"type":"string"},"tags":{"type":"array","items":{"type":"string"}},"call":{"type":"object","additionalProperties":false,"properties":{"name":{"type":"string"},"description":{"type":"string"}}},"request":{"type":"object","additionalProperties":false,"properties":{"method":{"type":"string","minLength":1},"headers":{"type":"object","additionalProperties":{}},"parameters":{"type":"object","additionalProperties":{}},"path":{"type":"object","additionalProperties":{}},"body":{},"auth_id":{},"token_id":{}}}},"anyOf":[{"required":["operationId"]},{"required":["method"]},{"required":["path"]}]}}}');
+
 /***/ })
 
 /******/ 	});
@@ -766,6 +793,7 @@ const os = __nccwpck_require__(37);
 const { execFile } = __nccwpck_require__(81);
 const { promisify } = __nccwpck_require__(837);
 const { buildProjectFromOpenApi } = __nccwpck_require__(465);
+const openApiMappingSchema = __nccwpck_require__(669);
 const { parseBoolean, summarizeDocument } = __nccwpck_require__(880);
 
 const execFileAsync = promisify(execFile);
@@ -790,6 +818,7 @@ function fileExists(filePath) {
 
 const moduleCache = new Map();
 let moduleBaseDir = "";
+let validateOpenApiMappingDocumentFn = null;
 
 async function ensureModule(moduleName, version) {
   if (moduleCache.has(moduleName)) {
@@ -929,6 +958,27 @@ async function validateSchema(document, schemaUrl) {
   }
 }
 
+async function validateOpenApiMapping(document) {
+  const Ajv = await ensureModule("ajv", "8.12.0");
+  const addFormats = await ensureModule("ajv-formats", "2.1.1");
+
+  if (!validateOpenApiMappingDocumentFn) {
+    const ajv = new Ajv({ allErrors: true, strict: false });
+    addFormats(ajv);
+    validateOpenApiMappingDocumentFn = ajv.compile(openApiMappingSchema);
+  }
+
+  const valid = validateOpenApiMappingDocumentFn(document);
+  if (!valid) {
+    const details = (validateOpenApiMappingDocumentFn.errors || [])
+      .map((error) => `${error.instancePath || "/"} ${error.message}`.trim())
+      .slice(0, 25)
+      .join("\n");
+
+    throw new Error(`OpenAPI mapping validation failed:\n${details}`);
+  }
+}
+
 function sanitizeSchemaIds(node, isRoot) {
   if (!node || typeof node !== "object") return;
 
@@ -1019,6 +1069,7 @@ async function run() {
   if (openApiMode) {
     const openApiDoc = await loadDocumentFromFile(openapiFile);
     const mappingDoc = openapiMappingFile ? await loadDocumentFromFile(openapiMappingFile) : {};
+    await validateOpenApiMapping(mappingDoc);
     const baseDoc = baseProjectFile ? await loadDocumentFromFile(baseProjectFile) : null;
     const transformed = buildProjectFromOpenApi(openApiDoc, mappingDoc, {
       baseProjectDocument: baseDoc,

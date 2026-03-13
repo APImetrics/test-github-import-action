@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../src/openapi-mapping.schema.json
+
 server_url: https://api.example.com/v1
 
 default_tags:
