@@ -6,7 +6,8 @@
   "type": "commonjs",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build src/index.js -o dist"
+    "build": "ncc build src/index.js -o dist",
+    "test": "node --test test/openapi.test.js test/utils.test.js"
   },
   "devDependencies": {
     "@vercel/ncc": "0.38.1"

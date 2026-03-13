@@ -638,4 +638,8 @@ function resolvePointer(root, pointer) {
 
 module.exports = {
   buildProjectFromOpenApi,
+  normalizeKeyStr,
+  selectOperations,
+  pickBaseServer,
+  mergeProject,
 };
