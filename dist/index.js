@@ -315,6 +315,14 @@ function buildRequest(op, baseServer, mappingDoc, override) {
     request.body = null;
   }
 
+  if (requestOverride.auth_id !== undefined) {
+    request.auth_id = requestOverride.auth_id;
+  }
+
+  if (requestOverride.token_id !== undefined) {
+    request.token_id = requestOverride.token_id;
+  }
+
   return request;
 }
 
